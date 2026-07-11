@@ -1,0 +1,22 @@
+// C++ owns the geometry. This script controls the update policy.
+var circle = 0;
+while (circle < world.count()) {
+    world.move_circle(circle, 0.25, -0.10);
+    circle = circle + 1;
+}
+
+var round = 0;
+while (round < 3) {
+    if (world.collision_count() > 0) {
+        world.scale_all(0.90);
+    } else {
+        world.move_circle(0, 0.10, 0.0);
+    }
+    round = round + 1;
+}
+
+if (world.overlaps(2, 3)) {
+    return "pair 2/3 overlaps: " + world.summary();
+}
+
+return "layout is clear: " + world.summary();

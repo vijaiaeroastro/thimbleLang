@@ -39,6 +39,9 @@ def main() -> int:
     amalgamated_binary = BUILD / (
         "test_amalgamated.exe" if os.name == "nt" else "test_amalgamated"
     )
+    geometry_binary = BUILD / (
+        "geometry_runtime.exe" if os.name == "nt" else "geometry_runtime"
+    )
     generated_header = BUILD / "thimble.hpp"
 
     run(compiler_commands(compiler, ROOT / "include", ROOT / "tests" / "test_language.cpp", test_binary))
@@ -47,6 +50,11 @@ def main() -> int:
     run([sys.executable, str(ROOT / "tools" / "amalgamate.py"), str(generated_header)])
     run(compiler_commands(compiler, BUILD, ROOT / "tests" / "amalgamated.cpp", amalgamated_binary))
     run([str(amalgamated_binary)])
+
+    run(compiler_commands(compiler, ROOT / "include",
+                          ROOT / "examples" / "geometry_runtime.cpp",
+                          geometry_binary))
+    run([str(geometry_binary), str(ROOT / "examples" / "geometry.thimble")])
 
     print("Thimble tests passed.")
     return 0

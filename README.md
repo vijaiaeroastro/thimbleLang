@@ -1,41 +1,55 @@
 # Thimble
 
-Thimble is a tiny scripting language which can be embedded inside a C++17
-program. It is meant for configuration, small rules, automation hooks and
-other places where a full scripting runtime will be too much.
+Thimble is a small embeddable scripting language for adding configuration,
+application rules and controlled runtime behaviour to C++ programs without
+bringing in a large scripting runtime.
 
-The language is intentionally small: `null`, `bool`, `int`, `real` and
-`string`; `let` and `var`; `if`, `else`, `while` and `return`; named functions;
-strict operators; and explicitly bound C++ values and functions. A script has
-no direct file, network, process or operating-system access.
+It is written for C++17, is header-only, and uses only the C++ standard library.
+The host application decides which values, functions and C++ objects a script
+can use.
 
-The language specification is in [SPEC.md](SPEC.md). The project home is
-[thimblelang.org](https://thimblelang.org).
+Project website: [thimblelang.org](https://thimblelang.org)  
+Language specification: [SPEC.md](SPEC.md)  
+License: [MIT](LICENSE)
 
-Thimble is released under the [MIT License](LICENSE).
+## What is available
 
-For a map of the implementation and contribution flow, see
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+The current implementation provides:
 
-The public website is kept in `site/`. It is a static Workers Asset deployment
-configured by `wrangler.jsonc`. Cloudflare Workers can serve that directory
-directly, so the website does not need a separate frontend framework or build
-system.
+- `null`, `bool`, `int`, `real` and `string`
+- arrays and maps
+- `let` and `var` bindings
+- lexical scopes
+- `if`, `else`, `while` and `return`
+- named functions and recursion
+- arithmetic, comparison and logical operators
+- zero-based indexing
+- `len`, `push`, `pop` and `remove`
+- typed C++ free-function and member-function bindings
+- opaque, shared-owned C++ host objects
+- registered object properties and methods
+- structured compile and runtime errors
+- execution-step and call-depth limits
 
-## Current implementation
+There are no implicit conversions. A script has no direct file, network,
+process or operating-system access.
 
-The implementation is header-only and uses only the C++ standard library. The
-development headers are kept separately under `include/thimble/`. For shipping,
-the amalgamation script joins them into one header:
+## A small script
 
-```text
-python3 tools/amalgamate.py
+```thimble
+fn clamp(value, low, high) {
+    if (value < low) { return low; }
+    if (value > high) { return high; }
+    return value;
+}
+
+var values = [10, 20, 30];
+push(values, 40);
+
+return clamp(values[2], 0, 25);
 ```
 
-This writes `dist/thimble.hpp`. The generated file is convenient to copy into a
-host project. It should not be edited by hand.
-
-## Small example
+## Embedding
 
 ```cpp
 #include "thimble/thimble.hpp"
@@ -43,68 +57,120 @@ host project. It should not be edited by hand.
 int main() {
     thimble::HostContext host;
     host.bind_value("limit", 10);
-    host.bind_function("log", 1, [](const std::vector<thimble::Value>& args) {
-        // Send args[0] to the application's logger here.
-        return thimble::Result<thimble::Value>(thimble::Value());
-    });
 
     auto program = thimble::compile(R"(
         var n = 0;
         while (n < limit) { n = n + 1; }
-        log("finished");
         return n;
     )", host);
 
-    if (!program) return 1;
+    if (!program) {
+        return 1;
+    }
+
     auto result = program.value().execute(host);
-    return result ? 0 : 1;
+    if (!result) {
+        return 1;
+    }
+
+    return result.value().as_int().value() == 10 ? 0 : 1;
 }
 ```
 
-The same compiled `Program` can be executed again with changed host values.
-Execution has step and call-depth limits so that a host can keep untrusted
-scripts bounded.
+Compilation produces an immutable `Program`. The same program can be executed
+again with changed host values. Each execution receives fresh script state.
 
-For ordinary typed C++ functions, the convenience overload deduces the arity
-and converts supported Thimble values:
+## Binding C++ functions
+
+Existing typed free functions can be registered directly:
 
 ```cpp
-int add(int a, int b) { return a + b; }
+int add(int a, int b) {
+    return a + b;
+}
+
 host.bind_function("add", add);
 ```
 
-For an existing object, bind a member function directly:
+Member functions can be registered on an existing object:
 
 ```cpp
 Meter meter;
 host.bind_method("scale", meter, &Meter::scale);
 ```
 
-Typed bindings support `bool`, `int`, `std::int64_t`, `double`, `std::string`,
-`thimble::Value`, `void`, and `thimble::Result<thimble::Value>` returns. Type
-failures are returned as normal Thimble errors.
+The typed convenience layer supports `bool`, `int`, `std::int64_t`, `double`,
+`std::string`, `thimble::Value`, `void` and
+`thimble::Result<thimble::Value>` returns. The lower-level callback API is also
+available when custom conversion or validation is needed.
+
+## Binding C++ objects
+
+Objects are exposed through explicit descriptors. There is no C++ reflection.
+
+```cpp
+auto world = std::make_shared<GeometryWorld>();
+auto world_type = host.define_object_type<GeometryWorld>("GeometryWorld");
+
+world_type.property("total_area", &GeometryWorld::total_area);
+world_type.method("move_circle", &GeometryWorld::move_circle);
+world_type.method("collision_count", &GeometryWorld::collision_count);
+
+host.bind_object("world", world, world_type);
+```
+
+The script can then use:
+
+```thimble
+world.move_circle(0, 0.25, -0.10);
+
+if (world.collision_count() > 0) {
+    return world.total_area;
+}
+```
+
+See the complete [geometry example](examples/) for a C++ geometry model
+controlled by a Thimble script.
 
 ## Building and testing
 
-The repository does not need a package manager. Run:
+The repository uses Python for the build orchestration, so no shell script is
+needed:
 
 ```text
 python3 build.py
 ```
 
-The script compiles the test suite with C++17, runs it, creates the amalgamated
-header, and validates that generated header separately. A compiler can be
-selected with the `CXX` environment variable, for example `CXX=clang++
-python3 build.py`.
+The build script compiles and runs the language tests, validates the generated
+single-header distribution, and runs the geometry example. Set `CXX` if a
+specific compiler is needed.
 
-GitHub Actions runs the same build on Ubuntu, Windows (MSVC), and macOS for
-every push and pull request. The workflow is in `.github/workflows/ci.yml`.
+To generate only the distributable header:
 
-## Project direction
+```text
+python3 tools/amalgamate.py
+```
 
-The first release is keeping the language plain and dependable. Script-defined
-classes and records, modules, exceptions, concurrency, file/network access and
-garbage collection are deliberately kept out of version 0.1. Host objects are
-available only through explicitly registered descriptors. New features should
-first be written into the specification and then covered by tests before being
-added to the runtime.
+This writes `dist/thimble.hpp`. The generated header should not be edited by
+hand.
+
+## Repository layout
+
+```text
+include/thimble/       Development headers
+tests/                 Language and embedding tests
+examples/              Runnable C++ and Thimble examples
+site/                  Public static website
+docs/                  Contributor documentation
+tools/                 Amalgamation tools
+```
+
+GitHub Actions tests Ubuntu, Windows with MSVC, and macOS on every push and
+pull request. The workflow is in `.github/workflows/ci.yml`.
+
+## Current exclusions
+
+The language does not yet include script-defined classes or records, modules,
+language exceptions, concurrency, file or network access, reflection, or
+garbage collection. Host objects are available only through explicitly
+registered descriptors.
