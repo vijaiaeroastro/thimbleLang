@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.cloudflare.com/workers/wrangler/config-schema.json",
-  "name": "thimblelang-org",
+  "name": "thimble-lang",
   "compatibility_date": "2026-07-11",
   "workers_dev": false,
   "preview_urls": false,
