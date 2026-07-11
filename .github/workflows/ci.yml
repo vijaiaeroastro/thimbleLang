@@ -15,18 +15,22 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
-      - name: Set up MSVC
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Run build and tests
-        env:
-          CXX: ${{ runner.os == 'Windows' && 'cl' || '' }}
+      - name: Run build and tests on Unix
+        if: runner.os != 'Windows'
         run: python build.py
+
+      - name: Run build and tests on Windows
+        if: runner.os == 'Windows'
+        shell: cmd
+        env:
+          CXX: cl
+        run: |
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do call "%%i\Common7\Tools\VsDevCmd.bat" -arch=x64
+          python build.py

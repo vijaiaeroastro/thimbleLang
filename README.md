@@ -76,12 +76,6 @@ python3 build.py`.
 GitHub Actions runs the same build on Ubuntu, Windows (MSVC), and macOS for
 every push and pull request. The workflow is in `.github/workflows/ci.yml`.
 
-## Repository description
-
-> Thimble is a tiny, safe and embeddable C++17 scripting language. Header-only,
-> standard-library-only, with strict values, lexical scope, host bindings,
-> structured errors and execution limits.
-
 ## Project direction
 
 The first release is keeping the language plain and dependable. Classes,
