@@ -66,3 +66,10 @@ amalgamated header, and compiles a separate test against that generated file.
 It leaves standard-library includes untouched and removes repeated `#pragma once`
 lines. The generated header is disposable output; edit the files under
 `include/thimble/` and run the script again.
+
+## Website
+
+The small public website lives under `site/` and uses Bootstrap from a pinned
+CDN URL plus a local `styles.css`. `wrangler.jsonc` points Workers Static Assets
+at that directory. There is no frontend build step at present; adding one later
+should keep its generated output separate from the source `site/` folder.

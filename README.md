@@ -17,6 +17,11 @@ Thimble is released under the [MIT License](LICENSE).
 For a map of the implementation and contribution flow, see
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+The public website is kept in `site/`. It is a static Workers Asset deployment
+configured by `wrangler.jsonc`. Cloudflare Workers can serve that directory
+directly, so the website does not need a separate frontend framework or build
+system.
+
 ## Current implementation
 
 The implementation is header-only and uses only the C++ standard library. The
