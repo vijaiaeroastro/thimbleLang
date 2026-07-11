@@ -34,3 +34,31 @@ jobs:
         run: |
           for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do call "%%i\Common7\Tools\VsDevCmd.bat" -arch=x64
           python build.py
+
+  sanitizers:
+    name: sanitizers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Run address and undefined behaviour sanitizers
+        run: python build.py --sanitize --warnings-as-errors
+
+  release-validation:
+    name: package and CMake consumer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Validate installed and archived distributions
+        run: python tools/validate_release.py
+      - name: Parse website HTML
+        run: python -c "from html.parser import HTMLParser; from pathlib import Path; p=HTMLParser(); [p.feed(f.read_text()) for f in Path('site').glob('*.html')]"

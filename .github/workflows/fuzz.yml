@@ -1,0 +1,25 @@
+name: Thimble fuzzing
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
+
+jobs:
+  parser:
+    name: parser libFuzzer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Configure fuzz target
+        env:
+          CC: clang
+          CXX: clang++
+        run: cmake -S . -B build/fuzz -DTHIMBLE_BUILD_TESTS=OFF -DTHIMBLE_BUILD_EXAMPLES=OFF -DTHIMBLE_BUILD_FUZZER=ON
+      - name: Build fuzz target
+        run: cmake --build build/fuzz --target thimble_parser_fuzzer --parallel
+      - name: Run bounded fuzz session
+        env:
+          ASAN_OPTIONS: detect_leaks=0:symbolize=0
+        run: build/fuzz/thimble_parser_fuzzer -max_total_time=60 -timeout=5

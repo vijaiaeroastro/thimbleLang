@@ -20,9 +20,16 @@ headers below.
   for every parsed node.
 - `parser.hpp` is a recursive-descent parser. Each precedence level has a
   separate method, and parser results are moved into the AST.
-- `runtime.hpp` contains `Program`, compile-time name checks, lexical
-  environments, expression evaluation, statement execution, callbacks and
-  limits.
+- `runtime.hpp` contains the small `Program` facade and execution entry point.
+- `detail/compiler.hpp` contains name, scope, arity and host-shape validation.
+- `detail/evaluator.inl` contains expression and arithmetic evaluation.
+- `detail/collections_objects.inl` contains collection built-ins and host-object
+  dispatch.
+- `detail/execution.inl` contains calls, assignment and statement execution.
+- `detail/runner_control.inl` contains step, time, cancellation and allocation
+  accounting.
+- `detail/runtime_support.hpp` contains the execution-local environment,
+  bindings and statement flow carrier used by the runtime.
 
 The runtime uses `std::shared_ptr<Env>` only for parent scope lifetime. A block
 gets a child environment, and a function call gets a child environment rooted
@@ -35,6 +42,8 @@ overloads. They convert supported `Value` types, invoke the existing C++ code,
 and convert the return to `Value`. The lower-level
 `bind_function(name, arity, HostFunction)` remains available when an application
 needs custom conversion or validation.
+The reference-taking method overload is non-owning. Its `shared_ptr` overload
+retains the object for the lifetime of the callback.
 
 ## Compile and execute flow
 
@@ -60,8 +69,8 @@ these places:
 1. add a token in `lexer.hpp` if needed;
 2. add an AST kind or field in `ast.hpp`;
 3. parse it in `parser.hpp`;
-4. validate names and arity in `runtime.hpp`'s compile pass;
-5. execute it in `Runner::eval` or `Runner::exec`; and
+4. validate names and arity in `detail/compiler.hpp`;
+5. execute it in the relevant runner detail file; and
 6. add both successful and failing cases in `tests/test_language.cpp`.
 
 Run `python3 build.py` after each change. It runs the language tests, regenerates an

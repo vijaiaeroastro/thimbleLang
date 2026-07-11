@@ -403,7 +403,9 @@ comparisons.
 
 Arrays and maps support indexing with `[]`. Arrays use zero-based integer
 indexes. Maps accept scalar values and host-object identities as keys; composite
-array and map keys use structural equality. Invalid indexes and missing keys are
+array and map keys use cycle-safe structural equality. A composite key containing
+a cycle is rejected with `cyclic_key`. Script mutations which would create any
+collection cycle are rejected with `cyclic_collection`. Invalid indexes and missing keys are
 runtime errors. The built-ins `len`, `push`, `pop`, and `remove` provide basic
 collection operations. Host objects support only explicitly registered property
 and method members.
@@ -585,6 +587,11 @@ exception text must not be exposed unless the host explicitly marks it safe.
 An exception-free build may instead require callbacks to be `noexcept`. Thimble
 itself has no `throw`, `try`, or catchable exception mechanism.
 
+Convenience bindings which retain a C++ object by reference require that object
+to outlive every execution using the host context. An embedding API should also
+offer a shared-ownership overload when the application cannot provide that
+lifetime externally.
+
 ### 10.4 Interface compatibility
 
 A compiled program records or otherwise validates the host interface it used for
@@ -650,7 +657,8 @@ Stable codes shall include, at minimum, `unexpected_character`, `unterminated_st
 `unexpected_token`, `unknown_name`, `duplicate_name`, `immutable_assignment`,
 `uninitialized_binding`, `type_mismatch`, `arity_mismatch`, `integer_overflow`,
 `division_by_zero`, `non_finite_real`, `host_failure`,
-`incompatible_host_interface`, `step_limit`, and `call_depth_limit`.
+`incompatible_host_interface`, `step_limit`, `call_depth_limit`,
+`allocation_limit`, `cyclic_collection`, and `cancelled`.
 
 ### 11.2 Source locations
 
@@ -690,10 +698,11 @@ always stops at the first error.
 
 ## 12. Execution limits and resource safety
 
-Every execution receives a non-negative step limit and non-negative call-depth
-limit. The host API may provide defaults, but it shall also permit the caller to
-set both. A value of zero is not “unlimited”; it permits no chargeable work. An
-implementation may expose an explicit trusted-mode unlimited option separately.
+Every execution receives non-negative step, call-depth, collection-size,
+string-size and allocation-work limits. The host API may provide defaults, but it shall also permit
+the caller to set them. A value of zero is not unlimited; it permits no
+chargeable work or storage of the corresponding resource. An implementation may
+expose an explicit trusted-mode unlimited option separately.
 
 ### 12.1 Step accounting
 
@@ -739,16 +748,18 @@ limits and state; such re-entry is not part of the current execution's depth.
 
 ### 12.3 Memory and host resources
 
-Version 0.1 does not define a portable hard memory limit. An implementation shall
-detect representational size overflow and convert recoverable allocation failure
-to a structured runtime resource error where the C++ environment permits.
-Embedders handling untrusted input should additionally cap source size, bound
-host callback work, and use an implementation-provided allocation limit if one
-is available.
+The implementation charges estimated bytes for script-created strings and
+collection storage to a cumulative allocation budget before committing the
+operation. Exhaustion produces `allocation_limit`. This bounds allocation work
+during one execution; it is not an exact measurement of live C++ memory.
+Compile-time AST storage, environments, container implementation overhead and
+host-owned values are outside the counter. Recoverable C++ allocation failure
+becomes `allocation_failure` where the environment permits.
 
-The absence of objects, containers, closures, and first-class functions means all
-script-managed lifetimes are bounded by an execution or owned scalar/string
-value. No tracing garbage collector is required.
+Script operations cannot create cyclic collection graphs. This permits shared
+ownership without requiring a tracing garbage collector. A host should likewise
+avoid injecting cyclic `Value` graphs; cycle-safe comparison and key validation
+remain defensive behaviour for such values.
 
 ## 13. Determinism and observable effects
 

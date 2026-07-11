@@ -2,3 +2,5 @@
 /dist/
 *.o
 *.out
+__pycache__/
+*.pyc

@@ -25,7 +25,7 @@
 host.bind_value(<span class="code-string">"input"</span>, <span class="code-number">42</span>);
 
 <span class="code-keyword">auto</span> program =
-    thimble::compile(source, host);
+    thimble::compile(source, <span class="code-string">"rules.thimble"</span>, host);
 
 <span class="code-keyword">auto</span> result =
     program.value().execute(host);</code></pre></div></div>
@@ -61,10 +61,15 @@ host.bind_function(<span class="code-string">"add"</span>, add);</code></pre></d
 };
 
 Meter meter;
-host.bind_method(<span class="code-string">"scale"</span>, meter, &amp;Meter::scale);</code></pre></div></div>
+host.bind_method(<span class="code-string">"scale"</span>, meter, &amp;Meter::scale);
+
+<span class="code-comment">// Or pass shared_ptr to retain the object.</span>
+<span class="code-keyword">auto</span> owned = std::make_shared&lt;Meter&gt;();
+host.bind_method(<span class="code-string">"owned_scale"</span>, owned, &amp;Meter::scale);</code></pre></div></div>
       <div class="col-12"><h2 class="h4 mb-3">Exposing an object to member syntax</h2><div class="code-card code-card-light"><pre><code><span class="code-keyword">auto</span> request_type = host.define_object_type&lt;Request&gt;(<span class="code-string">"Request"</span>);
 request_type.property(<span class="code-string">"amount"</span>, &amp;Request::get_amount,
                      &amp;Request::set_amount);
+request_type.property(<span class="code-string">"label"</span>, &amp;Request::label);
 request_type.method(<span class="code-string">"approve"</span>, &amp;Request::approve);
 
 host.bind_object(<span class="code-string">"request"</span>,
@@ -80,7 +85,7 @@ host.bind_object(<span class="code-string">"request"</span>,
 }
 
 <span class="code-keyword">return</span> report(input);</code></pre></div></div></div>
-      <div class="col-12"><div class="plain-card"><h2 class="h4">A complete geometry example</h2><p>The repository also contains a runnable geometry program. C++ owns circles and collision calculations while the Thimble script moves circles, scales them and chooses the final report.</p><p class="mb-0">Run <code>python3 build.py</code> from the repository root to compile and execute it.</p></div></div>
+      <div class="col-12"><div class="plain-card"><h2 class="h4">Complete application examples</h2><p>The repository contains a geometry program where C++ owns circles and collision calculations. A second policy program combines access checks, configuration validation and UI visibility, then returns the decisions in a map.</p><p class="mb-0">Run <code>python3 build.py</code> from the repository root to compile and execute both.</p></div></div>
     </div></div></section>
   </main>
   <footer class="footer py-4"><div class="container d-flex flex-column flex-md-row justify-content-between gap-2"><span>© 2026 Vijai Kumar · Thimble</span><a href="index.html">Back to overview</a></div></footer>

@@ -29,3 +29,8 @@ if (world.collision_count() > 0) {
     world.scale_all(0.90);
 }
 ```
+
+`policy_runtime.cpp` is a compact second example. It binds direct C++ data
+members and an existing free function, compiles named source, then returns a map
+containing validation and visibility decisions. It demonstrates the usual shape
+for access rules, configuration checks and small UI policies.

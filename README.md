@@ -28,8 +28,9 @@ The current implementation provides:
 - typed C++ free-function and member-function bindings
 - opaque, shared-owned C++ host objects
 - registered object properties and methods
-- structured compile and runtime errors
-- execution-step and call-depth limits
+- direct C++ data-member properties
+- structured errors with named source spans and call frames
+- step, depth, collection, string, allocation, time and cancellation limits
 
 There are no implicit conversions. A script has no direct file, network,
 process or operating-system access.
@@ -53,6 +54,7 @@ return clamp(values[2], 0, 25);
 
 ```cpp
 #include "thimble/thimble.hpp"
+#include <iostream>
 
 int main() {
     thimble::HostContext host;
@@ -70,6 +72,7 @@ int main() {
 
     auto result = program.value().execute(host);
     if (!result) {
+        std::cerr << thimble::format_error(result.error()) << '\n';
         return 1;
     }
 
@@ -79,6 +82,8 @@ int main() {
 
 Compilation produces an immutable `Program`. The same program can be executed
 again with changed host values. Each execution receives fresh script state.
+The overload `compile(source, source_name, host)` retains the name for
+diagnostics.
 
 ## Binding C++ functions
 
@@ -99,10 +104,18 @@ Meter meter;
 host.bind_method("scale", meter, &Meter::scale);
 ```
 
+This reference overload requires `meter` to outlive the host context. Pass a
+`std::shared_ptr<Meter>` when the context should retain ownership:
+
+```cpp
+auto meter = std::make_shared<Meter>();
+host.bind_method("scale", meter, &Meter::scale);
+```
+
 The typed convenience layer supports `bool`, `int`, `std::int64_t`, `double`,
-`std::string`, `thimble::Value`, `void` and
-`thimble::Result<thimble::Value>` returns. The lower-level callback API is also
-available when custom conversion or validation is needed.
+`std::string`, `thimble::Value`, `void` and typed `thimble::Result<T>` returns.
+The lower-level callback API is also available when custom conversion or
+validation is needed.
 
 ## Binding C++ objects
 
@@ -129,8 +142,8 @@ if (world.collision_count() > 0) {
 }
 ```
 
-See the complete [geometry example](examples/) for a C++ geometry model
-controlled by a Thimble script.
+See the [examples](examples/) for a geometry model and a smaller policy program
+covering access checks, input validation and UI visibility.
 
 ## Building and testing
 
@@ -144,6 +157,30 @@ python3 build.py
 The build script compiles and runs the language tests, validates the generated
 single-header distribution, and runs the geometry example. Set `CXX` if a
 specific compiler is needed.
+
+Optional checks:
+
+```text
+python3 build.py --sanitize
+python3 build.py --benchmark
+python3 build.py --warnings-as-errors
+```
+
+A Clang libFuzzer target is also available through
+`-DTHIMBLE_BUILD_FUZZER=ON`. The normal test run includes a deterministic parser
+mutation test on every platform.
+
+`Limits::allocation_budget` is a cumulative estimate for script-created strings
+and collection storage during one execution. It bounds allocation work, not all
+memory held by the C++ process. Script mutations which would create collection
+cycles are rejected.
+
+Thimble can also be consumed through CMake:
+
+```cmake
+add_subdirectory(thimble)
+target_link_libraries(my_app PRIVATE Thimble::thimble)
+```
 
 To generate only the distributable header:
 
@@ -163,10 +200,15 @@ examples/              Runnable C++ and Thimble examples
 site/                  Public static website
 docs/                  Contributor documentation
 tools/                 Amalgamation tools
+benchmarks/            Compile and execute timing program
 ```
 
 GitHub Actions tests Ubuntu, Windows with MSVC, and macOS on every push and
-pull request. The workflow is in `.github/workflows/ci.yml`.
+pull request. An additional Ubuntu job runs address and undefined-behaviour
+sanitizers. The workflow is in `.github/workflows/ci.yml`.
+
+The current library version is available as `thimble::version_string`. Release
+notes are kept in [CHANGELOG.md](CHANGELOG.md).
 
 ## Current exclusions
 
