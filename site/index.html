@@ -3,110 +3,51 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Thimble is a tiny, safe and embeddable C++17 scripting language.">
-  <title>Thimble: tiny scripts for C++</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <meta name="description" content="Thimble is a small embeddable scripting language for C++17.">
+  <title>Thimble: a small scripting language for C++</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark fixed-top thimble-nav">
+  <nav class="navbar navbar-expand-lg navbar-dark thimble-nav">
     <div class="container">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="#top">
-        <span class="brand-mark">T</span>
-        <span>Thimble</span>
+      <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+        <span class="brand-mark">T</span><span>Thimble</span>
       </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-              aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="mainNav">
         <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-3">
-          <li class="nav-item"><a class="nav-link" href="#why">Why Thimble</a></li>
-          <li class="nav-item"><a class="nav-link" href="#example">Example</a></li>
-          <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
-          <li class="nav-item"><a class="btn btn-sm btn-coral px-3" href="#get-started">Get started</a></li>
+          <li class="nav-item"><a class="nav-link active" href="index.html">Overview</a></li>
+          <li class="nav-item"><a class="nav-link" href="language.html">Language</a></li>
+          <li class="nav-item"><a class="nav-link" href="examples.html">Examples</a></li>
+          <li class="nav-item"><a class="btn btn-sm btn-coral px-3" href="language.html">Spec</a></li>
         </ul>
       </div>
     </div>
   </nav>
 
-  <main id="top">
-    <section class="hero-section">
-      <div class="container position-relative">
-        <div class="row align-items-center g-5">
+  <main>
+    <section class="page-hero">
+      <div class="container py-5">
+        <div class="row align-items-center g-5 py-lg-5">
           <div class="col-lg-7">
-            <p class="eyebrow">A small language with a clear boundary</p>
-            <h1>Tiny scripts.<br><span class="text-coral">Solid C++.</span></h1>
-            <p class="hero-copy">Thimble is a header-only scripting language for C++17. Give your application small rules and automation hooks without bringing a whole runtime along.</p>
+            <p class="eyebrow">C++17 · header-only · standard library only</p>
+            <h1>A small scripting language for C++.</h1>
+            <p class="hero-copy">Thimble is for rules, configuration and small automation tasks inside a C++ application. The host decides which values and functions a script can use.</p>
             <div class="d-flex flex-wrap gap-3 mt-4">
-              <a class="btn btn-coral btn-lg px-4" href="#get-started">Try the example</a>
-              <a class="btn btn-outline-light btn-lg px-4" href="#features">See what is inside</a>
-            </div>
-            <div class="hero-notes mt-4">
-              <span><span class="dot"></span> Header-only</span>
-              <span><span class="dot"></span> C++17</span>
-              <span><span class="dot"></span> Standard library only</span>
+              <a class="btn btn-coral btn-lg px-4" href="examples.html">See an example</a>
+              <a class="btn btn-outline-light btn-lg px-4" href="language.html">Read the language</a>
             </div>
           </div>
           <div class="col-lg-5">
-            <div class="code-card shadow-lg">
-              <div class="code-top"><span></span><span></span><span></span><small>hello.thimble</small></div>
-              <pre><code><span class="code-keyword">fn</span> greet(name) {
-    <span class="code-keyword">return</span> <span class="code-string">"Hello, "</span> + name;
-}
-
-<span class="code-keyword">let</span> message = greet(user_name);
-emit(message);
-
-<span class="code-keyword">return</span> <span class="code-number">null</span>;</code></pre>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="hero-grid"></div>
-    </section>
-
-    <section id="why" class="section-light py-5">
-      <div class="container py-lg-4">
-        <div class="row g-4 align-items-end mb-5">
-          <div class="col-lg-7">
-            <p class="eyebrow eyebrow-dark">Keep the boundary clear</p>
-            <h2>Useful scripting without the surprise baggage.</h2>
-          </div>
-          <div class="col-lg-5">
-            <p class="lead text-secondary mb-0">Thimble gives the script only what the host chooses to bind. Files, network, process access and other capabilities stay outside by default.</p>
-          </div>
-        </div>
-        <div class="row g-4">
-          <div class="col-md-4"><div class="feature-card h-100"><div class="feature-icon">01</div><h3>Small by design</h3><p>Five runtime types, lexical scope, functions and the control flow needed for real application rules.</p></div></div>
-          <div class="col-md-4"><div class="feature-card h-100"><div class="feature-icon">02</div><h3>Host decides</h3><p>Bind C++ values and callbacks explicitly. A script cannot discover capabilities on its own.</p></div></div>
-          <div class="col-md-4"><div class="feature-card h-100"><div class="feature-icon">03</div><h3>Bounded runs</h3><p>Structured diagnostics, execution-step limits and call-depth limits make embedding easier to reason about.</p></div></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="example" class="section-dark py-5">
-      <div class="container py-lg-4">
-        <div class="row g-5 align-items-center">
-          <div class="col-lg-5">
-            <p class="eyebrow">Readable at a glance</p>
-            <h2 class="text-white">A little language for the little jobs.</h2>
-            <p class="text-muted-light">Use a script for policy, configuration rules, menu logic, validation or an automation hook. Compile once and execute again with fresh host values.</p>
-            <a class="link-coral" href="#get-started">See the C++ binding →</a>
-          </div>
-          <div class="col-lg-7">
-            <div class="code-card code-card-large">
+            <div class="code-card">
               <div class="code-top"><span></span><span></span><span></span><small>rule.thimble</small></div>
               <pre><code><span class="code-keyword">var</span> score = initial_score;
-<span class="code-keyword">var</span> tries = <span class="code-number">0</span>;
 
-<span class="code-keyword">while</span> (tries &lt; max_tries) {
-    <span class="code-keyword">if</span> (score &gt;= passing_score) {
-        <span class="code-keyword">return</span> <span class="code-string">"accepted"</span>;
-    }
-    score = score + retry_bonus;
-    tries = tries + <span class="code-number">1</span>;
+<span class="code-keyword">if</span> (score &gt;= passing_score) {
+    <span class="code-keyword">return</span> <span class="code-string">"accepted"</span>;
 }
 
 <span class="code-keyword">return</span> <span class="code-string">"review"</span>;</code></pre>
@@ -116,48 +57,38 @@ emit(message);
       </div>
     </section>
 
-    <section id="features" class="section-light py-5">
+    <section class="section-light py-5">
       <div class="container py-lg-4">
-        <div class="row g-5">
-          <div class="col-lg-6">
-            <p class="eyebrow eyebrow-dark">The first release</p>
-            <h2>Just enough language.</h2>
-            <p class="lead text-secondary">No implicit conversions. No hidden global state. No object system to learn before writing the first rule.</p>
-          </div>
-          <div class="col-lg-6">
-            <div class="feature-list">
-              <div><strong>Values</strong><span>null · bool · int · real · string</span></div>
-              <div><strong>Flow</strong><span>if · else · while · return</span></div>
-              <div><strong>Bindings</strong><span>let · var · lexical scope</span></div>
-              <div><strong>Operators</strong><span>arithmetic · comparison · logical</span></div>
-              <div><strong>Embedding</strong><span>C++ values · functions · fresh runs</span></div>
-              <div><strong>Safety</strong><span>errors with locations · step limits · depth limits</span></div>
-            </div>
-          </div>
+        <div class="row g-4">
+          <div class="col-md-4"><div class="plain-card h-100"><h2 class="h4">Small runtime</h2><p>Five value types, lexical scope, functions, conditions and loops.</p></div></div>
+          <div class="col-md-4"><div class="plain-card h-100"><h2 class="h4">Explicit host API</h2><p>Bind C++ values and callbacks by name. Nothing else is available to a script.</p></div></div>
+          <div class="col-md-4"><div class="plain-card h-100"><h2 class="h4">Bounded execution</h2><p>Compile errors and runtime errors include source locations. Runs have step and call-depth limits.</p></div></div>
         </div>
       </div>
     </section>
 
-    <section id="get-started" class="cta-section py-5">
-      <div class="container py-4 text-center">
-        <p class="eyebrow">Ready when you are</p>
-        <h2 class="text-white">Put a small script where a large system feels heavy.</h2>
-        <p class="text-muted-light mx-auto cta-copy">Read the specification, include the single generated header, and bind only the values your application wants to share.</p>
-        <div class="d-flex justify-content-center flex-wrap gap-3 mt-4">
-          <a class="btn btn-coral btn-lg px-4" href="#features">Explore the features</a>
-          <a class="btn btn-outline-light btn-lg px-4" href="mailto:hello@thimblelang.org">Say hello</a>
+    <section class="section-dark py-5">
+      <div class="container py-lg-4">
+        <div class="row g-5 align-items-center">
+          <div class="col-lg-6">
+            <p class="eyebrow">Project status</p>
+            <h2 class="text-white">The first version stays deliberately limited.</h2>
+            <p class="text-muted-light">Script-defined classes and records, modules, exceptions, concurrency and file or network access are outside the initial language. Host objects are available through explicit descriptors.</p>
+          </div>
+          <div class="col-lg-6">
+            <ul class="simple-list">
+              <li><strong>Values:</strong> null, bool, int, real, string</li>
+              <li><strong>Statements:</strong> let, var, if, else, while, return</li>
+              <li><strong>Operators:</strong> arithmetic, comparison, logical</li>
+              <li><strong>Distribution:</strong> separate headers or one amalgamated header</li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="footer py-4">
-    <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
-      <span>© 2026 Vijai Kumar · Thimble</span>
-      <span>Small language. Clear boundary.</span>
-    </div>
-  </footer>
-
+  <footer class="footer py-4"><div class="container d-flex flex-column flex-md-row justify-content-between gap-2"><span>© 2026 Vijai Kumar · Thimble</span><span><a href="language.html">Language</a> · <a href="examples.html">Examples</a></span></div></footer>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -20,6 +20,9 @@ body { color: var(--ink); background: var(--paper); font-family: Inter, ui-sans-
 .link-coral { text-decoration: none; font-weight: 700; }
 .link-coral:hover { color: #ffad98; }
 .hero-section { overflow: hidden; position: relative; min-height: 700px; display: flex; align-items: center; padding: 9rem 0 6rem; color: white; background: var(--ink-deep); }
+.page-hero { color: white; background: var(--ink-deep); }
+.subpage-header { padding-top: 4rem; background: var(--paper); border-bottom: 1px solid #e5e9ed; }
+.subpage-header h1 { max-width: 760px; font-size: clamp(2.8rem, 6vw, 5rem); }
 .hero-grid { position: absolute; inset: 0; opacity: .18; background-image: linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px); background-size: 56px 56px; mask-image: linear-gradient(to right, black, transparent 80%); pointer-events: none; }
 .hero-section .container { z-index: 1; }
 .eyebrow { color: var(--coral); font-size: .76rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
@@ -41,10 +44,18 @@ pre { margin: 0; padding: 1.4rem 1.5rem 1.6rem; overflow-x: auto; color: #d7e7f2
 .code-keyword { color: #ff9f8a; }
 .code-string { color: #a6e3a1; }
 .code-number { color: #ffd580; }
+.code-comment { color: #8da7b8; }
 .code-card-large pre { padding: 1.8rem 2rem 2rem; font-size: .96rem; }
+.code-card-light { border-color: #dbe3e8; background: var(--ink); }
 .section-light { background: var(--paper); }
 .section-dark { background: var(--ink); }
 .feature-card { padding: 1.7rem; border: 1px solid #e5e9ed; border-radius: 15px; background: white; }
+.plain-card { padding: 1.6rem; border: 1px solid #e1e7eb; border-radius: 12px; background: white; }
+.plain-card p { margin: 0; color: var(--muted); line-height: 1.7; }
+.simple-list { padding-left: 0; margin: 0; color: rgba(255,255,255,.75); list-style: none; }
+.simple-list li { padding: .9rem 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+.simple-list li:last-child { border-bottom: 0; }
+.simple-list strong { color: white; }
 .feature-icon { margin-bottom: 2.5rem; color: var(--coral); font: 800 .8rem/1 "SFMono-Regular", Consolas, monospace; }
 .feature-card p, .text-secondary { line-height: 1.7; }
 .text-muted-light { color: rgba(255,255,255,.6); line-height: 1.7; }

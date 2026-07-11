@@ -29,6 +29,13 @@ gets a child environment, and a function call gets a child environment rooted
 at the current program execution. The `Program` itself remains immutable and
 can be executed again, or by another thread with a separate host context.
 
+`HostContext::bind_function(name, function_pointer)` and
+`HostContext::bind_method(name, object, member_pointer)` are typed convenience
+overloads. They convert supported `Value` types, invoke the existing C++ code,
+and convert the return to `Value`. The lower-level
+`bind_function(name, arity, HostFunction)` remains available when an application
+needs custom conversion or validation.
+
 ## Compile and execute flow
 
 `compile(source, host)` performs these steps:

@@ -26,21 +26,32 @@ class Parser {
   std::unique_ptr<Expr> term(){auto x=factor();while(!failed_&&(is(Tok::plus)||is(Tok::minus))){auto k=take().kind;auto y=factor();x=bin(k==Tok::plus?Binary::add:Binary::sub,std::move(x),std::move(y));}return x;}
   std::unique_ptr<Expr> factor(){auto x=unary();while(!failed_&&(is(Tok::star)||is(Tok::slash)||is(Tok::percent))){auto k=take().kind;auto y=unary();x=bin(k==Tok::star?Binary::mul:k==Tok::slash?Binary::div:Binary::mod,std::move(x),std::move(y));}return x;}
   std::unique_ptr<Expr> unary(){if(is(Tok::minus)||is(Tok::not_)){auto tok=take();auto x=std::make_unique<Expr>();x->kind=Expr::Kind::unary;x->span=tok.span;x->unary=tok.kind==Tok::minus?Unary::neg:Unary::not_;x->left=unary();return x;}return primary();}
-  std::unique_ptr<Expr> primary(){
+  std::unique_ptr<Expr> atom(){
     if(is(Tok::int_lit)||is(Tok::real_lit)||is(Tok::str_lit)||is(Tok::kw_true)||is(Tok::kw_false)||is(Tok::kw_null)){auto q=take();auto x=std::make_unique<Expr>();x->kind=Expr::Kind::literal;x->span=q.span; if(q.kind==Tok::str_lit)x->literal=Value(q.text);else if(q.kind==Tok::kw_true)x->literal=Value(true);else if(q.kind==Tok::kw_false)x->literal=Value(false);else if(q.kind==Tok::kw_null)x->literal=Value();else if(q.kind==Tok::int_lit){errno=0;long long v=std::strtoll(q.text.c_str(),nullptr,10);if(errno||v<0){fail("invalid_literal","integer literal out of range");return x;}x->literal=Value(std::int64_t(v));}else{errno=0;char* e=nullptr;double v=std::strtod(q.text.c_str(),&e);if(errno||!e||*e||!std::isfinite(v)){fail("invalid_literal","real literal out of range");return x;}x->literal=Value(v);}return x;}
-    if(is(Tok::id)){auto q=take();if(eat(Tok::lparen)){auto x=std::make_unique<Expr>();x->kind=Expr::Kind::call;x->span=q.span;x->name=q.text;if(!is(Tok::rparen)){do{x->args.push_back(expr());}while(eat(Tok::comma));}need(Tok::rparen,"expected ')' after arguments");return x;}auto x=std::make_unique<Expr>();x->kind=Expr::Kind::name;x->span=q.span;x->name=q.text;return x;}
+    if(is(Tok::id)){auto q=take();auto x=std::make_unique<Expr>();x->kind=Expr::Kind::name;x->span=q.span;x->name=q.text;return x;}
     if(eat(Tok::lparen)){auto x=expr();need(Tok::rparen,"expected ')' after expression");return x;}
+    if(eat(Tok::lbracket)){auto x=std::make_unique<Expr>();x->kind=Expr::Kind::array;x->span=cur().span;if(!is(Tok::rbracket)){do{x->elements.push_back(expr());}while(eat(Tok::comma));}need(Tok::rbracket,"expected ']' after array");return x;}
+    if(eat(Tok::lbrace)){auto x=std::make_unique<Expr>();x->kind=Expr::Kind::map;x->span=cur().span;if(!is(Tok::rbrace)){do{auto key=expr();need(Tok::colon,"expected ':' after map key");auto value=expr();x->entries.emplace_back(std::move(key),std::move(value));}while(eat(Tok::comma));}need(Tok::rbrace,"expected '}' after map");return x;}
     fail("unexpected_token","expected expression");return std::make_unique<Expr>();
+  }
+  std::unique_ptr<Expr> primary(){
+    auto x=atom();
+    while(!failed_){
+      if(eat(Tok::lparen)){auto call=std::make_unique<Expr>();call->kind=Expr::Kind::call;call->span=x->span;if(x->kind==Expr::Kind::name){call->name=x->name;}else{call->left=std::move(x);}if(!is(Tok::rparen)){do{call->args.push_back(expr());}while(eat(Tok::comma));}need(Tok::rparen,"expected ')' after arguments");x=std::move(call);continue;}
+      if(eat(Tok::lbracket)){auto index=std::make_unique<Expr>();index->kind=Expr::Kind::index;index->span=x->span;index->left=std::move(x);index->right=expr();need(Tok::rbracket,"expected ']' after index");x=std::move(index);continue;}
+      if(eat(Tok::dot)){if(!is(Tok::id)){fail("expected_name","expected member name");return x;}auto member=std::make_unique<Expr>();member->kind=Expr::Kind::member;member->span=x->span;member->left=std::move(x);member->name=take().text;x=std::move(member);continue;}
+      break;
+    }
+    return x;
   }
   std::unique_ptr<Expr> bin(Binary op,std::unique_ptr<Expr> a,std::unique_ptr<Expr> b){auto x=std::make_unique<Expr>();x->kind=Expr::Kind::binary;x->span=a?a->span:Span{};x->binary=op;x->left=std::move(a);x->right=std::move(b);return x;}
   std::unique_ptr<Stmt> statement(){
     if(is(Tok::kw_let)||is(Tok::kw_var)){auto q=take();if(!is(Tok::id)){fail("expected_name","expected variable name");return {}; }auto n=take();auto s=std::make_unique<Stmt>();s->kind=Stmt::Kind::var;s->span=q.span;s->name=n.text;s->mutable_=q.kind==Tok::kw_var;need(Tok::assign,"expected '='");s->expr=expr();need(Tok::semi,"expected ';'");return s;}
-    if(is(Tok::id)&&p_+1<t_.size()&&t_[p_+1].kind==Tok::assign){auto n=take();take();auto s=std::make_unique<Stmt>();s->kind=Stmt::Kind::assign;s->span=n.span;s->name=n.text;s->expr=expr();need(Tok::semi,"expected ';'");return s;}
     if(is(Tok::kw_if)){auto q=take();auto s=std::make_unique<Stmt>();s->kind=Stmt::Kind::if_;s->span=q.span;need(Tok::lparen,"expected '('");s->condition=expr();need(Tok::rparen,"expected ')'");s->then_branch=block();if(eat(Tok::kw_else))s->else_branch=is(Tok::kw_if)?statement():block();return s;}
     if(is(Tok::kw_while)){auto q=take();auto s=std::make_unique<Stmt>();s->kind=Stmt::Kind::while_;s->span=q.span;need(Tok::lparen,"expected '('");s->condition=expr();need(Tok::rparen,"expected ')'");s->then_branch=block();return s;}
     if(is(Tok::kw_return)){auto q=take();auto s=std::make_unique<Stmt>();s->kind=Stmt::Kind::ret;s->span=q.span;if(!is(Tok::semi))s->expr=expr();need(Tok::semi,"expected ';'");return s;}
     if(is(Tok::lbrace))return block();
-    auto s=std::make_unique<Stmt>();s->kind=Stmt::Kind::expr;s->span=cur().span;s->expr=expr();need(Tok::semi,"expected ';'");return s;
+    auto lhs=expr();if(eat(Tok::assign)){auto s=std::make_unique<Stmt>();s->kind=Stmt::Kind::assign;s->span=lhs->span;s->target=std::move(lhs);s->expr=expr();need(Tok::semi,"expected ';'");return s;}auto s=std::make_unique<Stmt>();s->kind=Stmt::Kind::expr;s->span=lhs->span;s->expr=std::move(lhs);need(Tok::semi,"expected ';'");return s;
   }
   std::unique_ptr<Stmt> block(){auto b=std::make_unique<Stmt>();b->kind=Stmt::Kind::block;b->span=cur().span;need(Tok::lbrace,"expected '{'");while(!failed_&&!is(Tok::rbrace)&&!is(Tok::end))b->body.push_back(statement());need(Tok::rbrace,"expected '}'");return b;}
 public:

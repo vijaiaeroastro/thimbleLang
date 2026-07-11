@@ -37,6 +37,31 @@ struct Calculator {
     }
 };
 
+int plain_add(int a, int b) {
+    return a + b;
+}
+
+std::string plain_greet(const std::string& name) {
+    return "Hello, " + name;
+}
+
+thimble::Result<thimble::Value> identity_value(thimble::Value value) {
+    return value;
+}
+
+struct Multiplier {
+    int factor = 3;
+    int multiply(int value) { return value * factor; }
+    int read_factor() const { return factor; }
+};
+
+struct Request {
+    int amount = 5;
+    int get_amount() const { return amount; }
+    void set_amount(int value) { amount = value; }
+    int double_value(int value) const { return value * 2; }
+};
+
 int main() {
     // Literals, precedence, grouping and return defaults.
     assert(run_value("return null;").is_null());
@@ -102,6 +127,33 @@ int main() {
     HostContext free_host;
     free_host.bind_function("argc", 2, free_function);
     assert(run_value("return argc(1, 2);", free_host).as_int().value() == 2);
+    HostContext typed_host;
+    typed_host.bind_function("plain_add", plain_add);
+    typed_host.bind_function("plain_greet", plain_greet);
+    typed_host.bind_function("identity", identity_value);
+    Multiplier multiplier;
+    typed_host.bind_method("multiply", multiplier, &Multiplier::multiply);
+    typed_host.bind_method("read_factor", multiplier, &Multiplier::read_factor);
+    assert(run_value("return plain_add(multiply(4), read_factor());", typed_host).as_int().value() == 15);
+    assert(run_value("return plain_greet(\"Vijai\");", typed_host).as_string().value() == "Hello, Vijai");
+    assert(run_value("return identity(12);", typed_host).as_int().value() == 12);
+
+    HostContext object_host;
+    auto request = std::make_shared<Request>();
+    auto request_type = object_host.define_object_type<Request>("Request");
+    request_type.property("amount", &Request::get_amount, &Request::set_amount);
+    request_type.method("double_value", &Request::double_value);
+    object_host.bind_object("request", request, request_type);
+    assert(run_value(R"(
+        var values = [1, 2];
+        push(values, 3);
+        values[1] = 4;
+        let settings = {"enabled": true, 1: "one"};
+        request.amount = 7;
+        return request.double_value(values[0]) + len(settings) + request.amount;
+    )", object_host).as_int().value() == 11);
+    assert(request->amount == 7);
+    assert(run_error("let values = [1]; push(values, 2);", object_host).code == "immutable_assignment");
     auto callback_failure = HostContext{};
     callback_failure.bind_function("fail", 0, [](const std::vector<Value>&) -> Result<Value> {
         return make_error(ErrorCategory::host, "application_failure", "application rejected call");

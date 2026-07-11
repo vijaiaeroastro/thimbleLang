@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The Thimble 0.1 language at a glance.">
+  <title>Thimble: language</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark thimble-nav"><div class="container"><a class="navbar-brand d-flex align-items-center gap-2" href="index.html"><span class="brand-mark">T</span><span>Thimble</span></a><button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button><div class="collapse navbar-collapse" id="mainNav"><ul class="navbar-nav ms-auto align-items-lg-center gap-lg-3"><li class="nav-item"><a class="nav-link" href="index.html">Overview</a></li><li class="nav-item"><a class="nav-link active" href="language.html">Language</a></li><li class="nav-item"><a class="nav-link" href="examples.html">Examples</a></li><li class="nav-item"><a class="btn btn-sm btn-coral px-3" href="examples.html">Start here</a></li></ul></div></div></nav>
+  <main>
+    <header class="subpage-header"><div class="container py-5"><p class="eyebrow eyebrow-dark">Version 0.1</p><h1>Language at a glance</h1><p class="lead text-secondary">The complete specification is kept in the repository. This page gives the main pieces.</p></div></header>
+    <section class="section-light pb-5"><div class="container"><div class="row g-4">
+      <div class="col-lg-6"><div class="plain-card h-100"><h2 class="h4">Values</h2><p>Thimble has <code>null</code>, <code>bool</code>, <code>int</code>, <code>real</code>, <code>string</code>, arrays, maps and explicitly exposed host objects. Values are checked at runtime. There are no implicit conversions.</p></div></div>
+      <div class="col-lg-6"><div class="plain-card h-100"><h2 class="h4">Bindings and scope</h2><p><code>let</code> creates an immutable binding. <code>var</code> creates a mutable binding. Blocks and function calls create lexical scopes. Each execution starts with fresh script state.</p></div></div>
+      <div class="col-lg-6"><div class="plain-card h-100"><h2 class="h4">Control flow</h2><p>Use <code>if</code>, <code>else</code>, <code>while</code> and <code>return</code>. Conditions must be boolean. There is no truthiness conversion and no <code>break</code> or <code>continue</code> in this version.</p></div></div>
+      <div class="col-lg-6"><div class="plain-card h-100"><h2 class="h4">Functions</h2><p>Functions are named and have fixed parameters. They are not values. A function which reaches its closing brace returns <code>null</code>.</p></div></div>
+      <div class="col-lg-6"><div class="plain-card h-100"><h2 class="h4">Errors</h2><p>Lexical, syntax, name, type, runtime and limit errors include machine-readable codes and source locations. Execution stops at the first error.</p></div></div>
+      <div class="col-lg-6"><div class="plain-card h-100"><h2 class="h4">Collections</h2><p>Arrays use zero-based indexes. Maps accept Thimble values as keys. Use <code>len</code>, <code>push</code>, <code>pop</code> and <code>remove</code> for common collection operations.</p></div></div>
+      <div class="col-lg-6"><div class="plain-card h-100"><h2 class="h4">Host boundary</h2><p>The host can bind named values, fixed-arity callbacks and opaque object descriptors. Scripts do not get file, network, process or clock access unless the host writes a callback for it.</p></div></div>
+    </div></div></section>
+  </main>
+  <footer class="footer py-4"><div class="container d-flex flex-column flex-md-row justify-content-between gap-2"><span>© 2026 Vijai Kumar · Thimble</span><a href="index.html">Back to overview</a></div></footer>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

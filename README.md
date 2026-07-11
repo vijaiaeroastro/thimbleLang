@@ -65,6 +65,25 @@ The same compiled `Program` can be executed again with changed host values.
 Execution has step and call-depth limits so that a host can keep untrusted
 scripts bounded.
 
+For ordinary typed C++ functions, the convenience overload deduces the arity
+and converts supported Thimble values:
+
+```cpp
+int add(int a, int b) { return a + b; }
+host.bind_function("add", add);
+```
+
+For an existing object, bind a member function directly:
+
+```cpp
+Meter meter;
+host.bind_method("scale", meter, &Meter::scale);
+```
+
+Typed bindings support `bool`, `int`, `std::int64_t`, `double`, `std::string`,
+`thimble::Value`, `void`, and `thimble::Result<thimble::Value>` returns. Type
+failures are returned as normal Thimble errors.
+
 ## Building and testing
 
 The repository does not need a package manager. Run:
@@ -83,8 +102,9 @@ every push and pull request. The workflow is in `.github/workflows/ci.yml`.
 
 ## Project direction
 
-The first release is keeping the language plain and dependable. Classes,
-modules, exceptions, objects, concurrency, file/network access and garbage
-collection are deliberately kept out of version 0.1. New features should first
-be written into the specification and then covered by tests before being added
-to the runtime.
+The first release is keeping the language plain and dependable. Script-defined
+classes and records, modules, exceptions, concurrency, file/network access and
+garbage collection are deliberately kept out of version 0.1. Host objects are
+available only through explicitly registered descriptors. New features should
+first be written into the specification and then covered by tests before being
+added to the runtime.

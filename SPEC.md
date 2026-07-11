@@ -187,12 +187,20 @@ equality         = comparison, { ( "==" | "!=" ), comparison } ;
 comparison       = term, { ( "<" | "<=" | ">" | ">=" ), term } ;
 term             = factor, { ( "+" | "-" ), factor } ;
 factor           = unary, { ( "*" | "/" | "%" ), unary } ;
-unary            = ( "!" | "-" ), unary | primary ;
+unary            = ( "!" | "-" ), unary | postfix ;
 primary          = literal
-                 | call
                  | identifier
-                 | "(", expression, ")" ;
-call             = identifier, "(", [ arguments ], ")" ;
+                 | "(", expression, ")"
+                 | array-literal
+                 | map-literal ;
+postfix          = primary, { call-suffix | index-suffix | member-suffix } ;
+call-suffix      = "(", [ arguments ], ")" ;
+index-suffix     = "[", expression, "]" ;
+member-suffix    = ".", identifier ;
+array-literal    = "[", [ arguments ], "]" ;
+map-literal      = "{", [ map-entry, { ",", map-entry } ], "}" ;
+map-entry        = expression, ":", expression ;
+call             = postfix ;
 arguments        = expression, { ",", expression } ;
 literal          = "null" | "true" | "false"
                  | integer-literal | real-literal | string-literal ;
@@ -216,6 +224,9 @@ Every runtime value has exactly one of these types:
 | `int` | A signed 64-bit two's-complement integer. |
 | `real` | A finite C++ `double`. |
 | `string` | An owned sequence of zero or more bytes. |
+| `array` | An ordered, mutable sequence of values. |
+| `map` | A collection of values keyed by values. |
+| `host_object` | An opaque host-owned object with explicitly registered members. |
 
 The language is dynamically typed: names and parameters do not have declared
 types, and a mutable binding may hold values of different types over its
@@ -228,6 +239,7 @@ There are no implicit conversions. In particular:
 - a value is not converted to `bool` for a condition;
 - a value is not converted to `string` for concatenation; and
 - `null` is not a missing, false, or zero value.
+- arrays, maps and host objects do not convert to scalar values.
 
 Version 0.1 has no language-level conversion operations. A host may register
 explicit conversion functions if an application needs them.
@@ -389,6 +401,13 @@ defined. Applying an operator to any unlisted type combination is a runtime type
 error. Thus `1 + 2.0` and `1 == 1.0` are errors rather than conversions or false
 comparisons.
 
+Arrays and maps support indexing with `[]`. Arrays use zero-based integer
+indexes. Maps accept scalar values and host-object identities as keys; composite
+array and map keys use structural equality. Invalid indexes and missing keys are
+runtime errors. The built-ins `len`, `push`, `pop`, and `remove` provide basic
+collection operations. Host objects support only explicitly registered property
+and method members.
+
 Two `null` values are equal. Booleans and integers compare by value. Strings
 compare byte-for-byte. Reals compare using ordinary finite `double` value
 comparison; because non-finite values are forbidden, NaN behavior is not exposed.
@@ -507,6 +526,9 @@ Thimble values. It shall support these mappings:
 | `int` | `std::int64_t` |
 | `real` | `double` |
 | `string` | owning `std::string` or equivalent owning byte string |
+| `array` | owning sequence of `Value` |
+| `map` | owning key/value collection |
+| `host_object` | shared opaque host object reference |
 
 Constructing or returning a non-finite `real` through the host API shall fail
 with a structured host/value error; it shall never inject NaN or infinity into
@@ -516,7 +538,7 @@ Accessors shall be checked. Requesting a C++ representation that does not match
 the active tag shall report failure rather than coerce or produce undefined
 behavior.
 
-### 10.2 Host values
+### 10.2 Host values and objects
 
 The host interface can declare named value slots. At execution time, the context
 shall provide one valid `Value` for each slot that the program uses. From the
@@ -525,6 +547,12 @@ script variables.
 
 A missing required slot or incompatible context is a host-interface error before
 the first source statement executes.
+
+The host may define a reusable typed object descriptor and bind shared-owned
+instances to names. A descriptor explicitly lists readable properties, optional
+property setters, and methods. A script uses `object.property` and
+`object.method(arguments)`. A property and method cannot share one name. Host
+objects compare by identity and cannot use ordered operators.
 
 ### 10.3 Host functions
 
@@ -740,7 +768,7 @@ No unspecified operand or argument evaluation order is exposed to the script.
 
 The following are not part of the language:
 
-- arrays, maps, tuples, objects, records, classes, and user-defined types;
+- tuples, script-defined records, classes, and user-defined script types;
 - first-class functions, lambdas, closures, and nested function declarations;
 - modules, imports, includes, and separate script compilation units;
 - language exceptions, cleanup handlers, and deferred execution;
